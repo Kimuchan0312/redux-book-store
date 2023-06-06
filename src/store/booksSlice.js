@@ -1,6 +1,14 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import api from "../apiService";
 
+const initialState = {
+  books: [],
+  loading: false,
+  error: null,
+  removedBookId: null,
+  pageNum: 1
+};
+
 export const fetchBooks = createAsyncThunk(
   "books/fetchBooks",
   async ({ pageNum, limit, query }) => {
@@ -10,13 +18,6 @@ export const fetchBooks = createAsyncThunk(
     return response.data;
   }
 );
-
-const initialState = {
-  books: [],
-  loading: false,
-  error: null,
-  removedBookId: null,
-};
 
 const booksSlice = createSlice({
   name: "books",
@@ -40,6 +41,9 @@ const booksSlice = createSlice({
     removeBook: (state, action) => {
       state.books = state.books.filter((book) => book.id !== action.payload.id);
     },
+    setPageNum: (state, action) => {
+      state.pageNum = action.payload;
+    },
   },
   extraReducers: (builder) => {
     builder
@@ -50,6 +54,7 @@ const booksSlice = createSlice({
       .addCase(fetchBooks.fulfilled, (state, action) => {
         state.loading = false;
         state.books = action.payload;
+        console.log("Books state:", state.books);
       })
       .addCase(fetchBooks.rejected, (state, action) => {
         state.loading = false;
@@ -65,6 +70,7 @@ export const {
   setRemovedBookId,
   addBook,
   removeBook,
+  setPageNum
 } = booksSlice.actions;
 
 export default booksSlice.reducer;

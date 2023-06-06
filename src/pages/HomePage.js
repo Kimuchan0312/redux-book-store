@@ -3,7 +3,6 @@ import { ClipLoader } from "react-spinners";
 import { useNavigate } from "react-router-dom";
 import PaginationBar from "../components/PaginationBar";
 import SearchForm from "../components/SearchForm";
-import api from "../apiService";
 import { FormProvider } from "../form";
 import { useForm } from "react-hook-form";
 import {
@@ -17,18 +16,19 @@ import {
   CardContent,
 } from "@mui/material";
 import { useSelector, useDispatch } from "react-redux";
-import { fetchBooks} from "../store/booksSlice";
-import { setLoading } from "../store/booksSlice";
-import { setError } from "../store/bookSlice";
+import {
+  fetchBooks,
+  setPageNum,
+} from "../store/booksSlice";
 
-const BACKEND_API = process.env.REACT_APP_BACKEND_API;
+const BACKEND_API = "http://localhost:5000";
 
 const HomePage = () => {
   const books = useSelector((state) => state.books.books);
   const loading = useSelector((state) => state.books.loading);
+  const pageNum = useSelector((state) => state.books.pageNum);
   const totalPage = 10;
   const limit = 10;
-  const [pageNum, setPageNum] = useState(1);
   const [query, setQuery] = useState("");
 
   const dispatch = useDispatch();
@@ -39,21 +39,12 @@ const HomePage = () => {
   };
 
   useEffect(() => {
-    const fetchData = async () => {
-      dispatch(setLoading(true));
-      try {
-        let url = `/books?_page=${pageNum}&_limit=${limit}`;
-        if (query) url += `&q=${query}`;
-        const res = await api.get(url);
-        dispatch(fetchBooks(res.data));
-        dispatch(setError(""));
-      } catch (error) {
-        dispatch(setError(error.message));
-      }
-      dispatch(setLoading(false));
-    };
-    fetchData();
+    dispatch(fetchBooks({ pageNum, limit, query }));
   }, [dispatch, pageNum, limit, query]);
+
+  const handlePageChange = (newPageNum) => {
+    dispatch(setPageNum(newPageNum));
+  };
 
   //--------------form
   const defaultValues = {
@@ -85,7 +76,7 @@ const HomePage = () => {
         </FormProvider>
         <PaginationBar
           pageNum={pageNum}
-          setPageNum={setPageNum}
+          setPageNum={handlePageChange}
           totalPageNum={totalPage}
         />
       </Stack>
