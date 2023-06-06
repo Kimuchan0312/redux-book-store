@@ -6,49 +6,58 @@ import SearchForm from "../components/SearchForm";
 import api from "../apiService";
 import { FormProvider } from "../form";
 import { useForm } from "react-hook-form";
-import { Container, Alert, Box, Card, Stack, CardMedia, CardActionArea, Typography, CardContent } from "@mui/material";
-
-
+import {
+  Container,
+  Box,
+  Card,
+  Stack,
+  CardMedia,
+  CardActionArea,
+  Typography,
+  CardContent,
+} from "@mui/material";
+import { useSelector, useDispatch } from "react-redux";
+import { fetchBooks} from "../store/booksSlice";
+import { setLoading } from "../store/booksSlice";
+import { setError } from "../store/bookSlice";
 
 const BACKEND_API = process.env.REACT_APP_BACKEND_API;
 
 const HomePage = () => {
-  const [books, setBooks] = useState([]);
-  const [pageNum, setPageNum] = useState(1);
+  const books = useSelector((state) => state.books.books);
+  const loading = useSelector((state) => state.books.loading);
   const totalPage = 10;
   const limit = 10;
-
-  const [loading, setLoading] = useState(false);
+  const [pageNum, setPageNum] = useState(1);
   const [query, setQuery] = useState("");
-  const [errorMessage, setErrorMessage] = useState("");
 
-  const navigate = useNavigate()
+  const dispatch = useDispatch();
+
+  const navigate = useNavigate();
   const handleClickBook = (bookId) => {
     navigate(`/books/${bookId}`);
   };
 
-
-
-
   useEffect(() => {
     const fetchData = async () => {
-      setLoading(true);
+      dispatch(setLoading(true));
       try {
         let url = `/books?_page=${pageNum}&_limit=${limit}`;
         if (query) url += `&q=${query}`;
         const res = await api.get(url);
-        setBooks(res.data);
-        setErrorMessage("");
+        dispatch(fetchBooks(res.data));
+        dispatch(setError(""));
       } catch (error) {
-        setErrorMessage(error.message);
+        dispatch(setError(error.message));
       }
-      setLoading(false);
+      dispatch(setLoading(false));
     };
     fetchData();
-  }, [pageNum, limit, query]);
+  }, [dispatch, pageNum, limit, query]);
+
   //--------------form
   const defaultValues = {
-    searchQuery: ""
+    searchQuery: "",
   };
   const methods = useForm({
     defaultValues,
@@ -60,8 +69,9 @@ const HomePage = () => {
   return (
     <Container>
       <Stack sx={{ display: "flex", alignItems: "center", m: "2rem" }}>
-        <Typography variant="h3" sx={{ textAlign: "center" }}>Book Store</Typography>
-        {errorMessage && <Alert severity="danger">{errorMessage}</Alert>}
+        <Typography variant="h3" sx={{ textAlign: "center" }}>
+          Book Store
+        </Typography>
         <FormProvider methods={methods} onSubmit={handleSubmit(onSubmit)}>
           <Stack
             spacing={2}
@@ -81,19 +91,26 @@ const HomePage = () => {
       </Stack>
       <div>
         {loading ? (
-          <Box sx={{ textAlign: "center", color: "primary.main" }} >
+          <Box sx={{ textAlign: "center", color: "primary.main" }}>
             <ClipLoader color="inherit" size={150} loading={true} />
           </Box>
         ) : (
-          <Stack direction="row" spacing={2} justifyContent="space-around" flexWrap="wrap">
+          <Stack
+            direction="row"
+            spacing={2}
+            justifyContent="space-around"
+            flexWrap="wrap"
+          >
             {books.map((book) => (
               <Card
-                key={book.id} onClick={() => handleClickBook(book.id)}
+                key={book.id}
+                onClick={() => handleClickBook(book.id)}
                 sx={{
                   width: "12rem",
                   height: "27rem",
                   marginBottom: "2rem",
-                }}>
+                }}
+              >
                 <CardActionArea>
                   <CardMedia
                     component="img"
@@ -104,7 +121,6 @@ const HomePage = () => {
                     <Typography gutterBottom variant="h5" component="div">
                       {`${book.title}`}
                     </Typography>
-
                   </CardContent>
                 </CardActionArea>
               </Card>
